@@ -14,9 +14,9 @@ const App: React.FC = () => {
   const [activeColor, setActiveColor] = useState<string>(COLORS[0]);
   const [brushSize, setBrushSize] = useState<number>(5);
   const [panelOpacity, setPanelOpacity] = useState<number>(100);
-  const [gridOpacity, setGridOpacity] = useState<number>(60);
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
   const [isToolbarVisible, setIsToolbarVisible] = useState<boolean>(true);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 
   // Text Tool State
   const [activeFont, setActiveFont] = useState<string>(FONTS[1]);
@@ -28,18 +28,22 @@ const App: React.FC = () => {
   const [textItems, setTextItems] = useState<TextItem[]>([]);
 
   const handleUndo = useCallback(() => {
-    if (history.length === 0) return;
-    const lastStroke = history[history.length - 1];
-    setRedoStack(prev => [...prev, lastStroke]);
-    setHistory(prev => prev.slice(0, -1));
-  }, [history]);
+    setHistory(prev => {
+      if (prev.length === 0) return prev;
+      const lastStroke = prev[prev.length - 1];
+      setRedoStack(r => [...r, lastStroke]);
+      return prev.slice(0, -1);
+    });
+  }, []);
 
   const handleRedo = useCallback(() => {
-    if (redoStack.length === 0) return;
-    const lastRedo = redoStack[redoStack.length - 1];
-    setHistory(prev => [...prev, lastRedo]);
-    setRedoStack(prev => prev.slice(0, -1));
-  }, [redoStack]);
+    setRedoStack(prev => {
+      if (prev.length === 0) return prev;
+      const lastRedo = prev[prev.length - 1];
+      setHistory(h => [...h, lastRedo]);
+      return prev.slice(0, -1);
+    });
+  }, []);
 
   const handleClear = useCallback(() => {
     setHistory([]);
@@ -47,15 +51,15 @@ const App: React.FC = () => {
     setTextItems([]);
   }, []);
 
-  const handleStrokeComplete = (stroke: DrawingStroke) => {
+  const handleStrokeComplete = useCallback((stroke: DrawingStroke) => {
     setHistory(prev => [...prev, stroke]);
-    setRedoStack([]); // Clear redo stack on new action
-  };
+    setRedoStack([]);
+  }, []);
 
-  const handleTextAdd = (text: TextItem) => {
+  const handleTextAdd = useCallback((text: TextItem) => {
     setTextItems(prev => [...prev, text]);
     setRedoStack([]);
-  };
+  }, []);
 
   // Load saved data from localStorage on mount
   useEffect(() => {
@@ -94,17 +98,8 @@ const App: React.FC = () => {
 
     try {
       localStorage.setItem('fletBrush_save', JSON.stringify(saveData));
-      // Show success feedback
-      const button = document.querySelector('[data-save-button]') as HTMLElement;
-      if (button) {
-        const originalText = button.textContent;
-        button.textContent = 'Saved!';
-        button.classList.add('bg-green-500', 'hover:bg-green-600');
-        setTimeout(() => {
-          button.textContent = originalText;
-          button.classList.remove('bg-green-500', 'hover:bg-green-600');
-        }, 1500);
-      }
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
     } catch (error) {
       console.error('Failed to save:', error);
       alert('Failed to save. Please try again.');
@@ -134,11 +129,10 @@ const App: React.FC = () => {
           </button>
           <button
             onClick={handleSave}
-            data-save-button
-            className="h-10 px-5 rounded-full bg-primary text-white text-sm font-bold shadow-sm hover:bg-blue-600 transition-colors"
+            className={`h-10 px-5 rounded-full text-white text-sm font-bold shadow-sm transition-colors ${saveStatus === 'saved' ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-blue-600'}`}
             title="Save to browser storage"
           >
-            Save
+            {saveStatus === 'saved' ? 'Saved!' : 'Save'}
           </button>
         </div>
       </header>
@@ -158,8 +152,6 @@ const App: React.FC = () => {
           setBrushSize={setBrushSize}
           activeColor={activeColor}
           setActiveColor={setActiveColor}
-          gridOpacity={gridOpacity}
-          setGridOpacity={setGridOpacity}
           activeFont={activeFont}
           setActiveFont={setActiveFont}
           activeFontSize={activeFontSize}
@@ -186,13 +178,6 @@ const App: React.FC = () => {
         </button>
 
         <div className="absolute inset-0 w-full h-full bg-transparent overflow-hidden group">
-          {/* Grid Background - 완전히 투명하게 (뒤 화면이 보이도록) */}
-          {/* 그리드는 필요시에만 표시되도록 주석 처리 */}
-          {/* <div
-            className="absolute inset-0 bg-grid-pattern pointer-events-none transition-opacity duration-300"
-            style={{ opacity: gridOpacity / 100 }}
-          /> */}
-
           <Canvas
             ref={canvasRef}
             activeTool={activeTool}
@@ -205,13 +190,6 @@ const App: React.FC = () => {
             activeFont={activeFont}
             activeFontSize={activeFontSize}
           />
-
-          {/* 힌트 텍스트 제거 - 완전히 투명한 배경을 위해 */}
-          {/* <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-20 transition-opacity duration-700">
-            <p className="text-[#101418] dark:text-gray-400 font-medium text-lg">
-              {activeTool === Tool.TEXT ? 'Click to add text' : 'Start drawing...'}
-            </p>
-          </div> */}
         </div>
 
         {/* Bottom Floating Toolbar */}

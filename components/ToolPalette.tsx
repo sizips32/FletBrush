@@ -9,8 +9,6 @@ interface ToolPaletteProps {
   setBrushSize: (s: number) => void;
   activeColor: string;
   setActiveColor: (c: string) => void;
-  gridOpacity: number;
-  setGridOpacity: (o: number) => void;
   activeFont: string;
   setActiveFont: (f: string) => void;
   activeFontSize: number;
@@ -25,7 +23,6 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
   activeTool, setActiveTool,
   brushSize, setBrushSize,
   activeColor, setActiveColor,
-  gridOpacity, setGridOpacity,
   activeFont, setActiveFont,
   activeFontSize, setActiveFontSize,
   panelOpacity, setPanelOpacity,
@@ -36,39 +33,39 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
   return (
     <div className="bg-white/90 dark:bg-[#1a2634]/90 backdrop-blur-sm px-4 py-2 shadow-soft border-b border-[#f0f2f5]/50 dark:border-[#2a3644]/50 relative overflow-visible">
       <div className="flex flex-col xl:flex-row items-center justify-between gap-3 max-w-[1400px] mx-auto">
-        
+
         {/* Drawing & Text Tools */}
         <div className="flex flex-col lg:flex-row w-full xl:w-auto items-center gap-3 lg:gap-4">
           <div className="flex items-center bg-[#f0f2f5] dark:bg-[#2a3644] rounded-lg p-0.5 gap-0.5">
-            <button 
+            <button
               onClick={() => setActiveTool(Tool.PEN)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.PEN ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
               title="Pen (✎)"
             >
               <span className="material-symbols-outlined text-lg">edit</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTool(Tool.HIGHLIGHTER)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.HIGHLIGHTER ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
               title="Highlighter (✒)"
             >
               <span className="material-symbols-outlined text-lg">stylus</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTool(Tool.ERASER)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.ERASER ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
               title="Eraser (⌦)"
             >
               <span className="material-symbols-outlined text-lg">ink_eraser</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTool(Tool.TEXT)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.TEXT ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
               title="Text Tool (T)"
             >
               <span className="material-symbols-outlined text-lg">title</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTool(Tool.LASER)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.LASER ? 'bg-white dark:bg-[#3a4654] text-red-500 shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
               title="Laser Pointer (●)"
@@ -84,7 +81,7 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
             <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#5e758d] text-base">font_download</span>
-                <select 
+                <select
                   value={activeFont}
                   onChange={(e) => setActiveFont(e.target.value)}
                   className="bg-white dark:bg-[#2a3644] border-[#dae0e7] dark:border-[#3a4654] rounded-lg text-xs font-bold h-8 px-2 outline-none focus:ring-1 focus:ring-primary"
@@ -94,7 +91,7 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-xs text-[#101418] dark:text-gray-200">Size</span>
-                <input 
+                <input
                   type="range" min="8" max="72" value={activeFontSize}
                   onChange={(e) => setActiveFontSize(parseInt(e.target.value))}
                   className="w-20 lg:w-24"
@@ -111,7 +108,7 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
                 {activeTool === Tool.ERASER ? 'Eraser Size' : 'Size'}
               </span>
               <div className="flex items-center gap-2">
-                <input 
+                <input
                   type="range" min="1" max="50" value={brushSize}
                   onChange={(e) => setBrushSize(parseInt(e.target.value))}
                   className="w-24 lg:w-28"
@@ -122,20 +119,6 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
               </div>
             </div>
           )}
-
-          <div className="hidden lg:block h-6 w-px bg-[#f0f2f5] dark:bg-[#3a4654]"></div>
-
-          {/* Grid Control */}
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#5e758d] text-base">grid_on</span>
-            <span className="font-bold text-xs text-[#101418] dark:text-gray-200">Grid</span>
-            <input 
-              type="range" min="0" max="100" value={gridOpacity}
-              onChange={(e) => setGridOpacity(parseInt(e.target.value))}
-              className="w-20 lg:w-24"
-            />
-            <span className="w-8 text-center text-xs font-bold">{gridOpacity}%</span>
-          </div>
         </div>
 
         <div className="hidden xl:block h-6 w-px bg-[#f0f2f5] dark:bg-[#3a4654]"></div>
@@ -143,14 +126,14 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
         {/* Color Palette & Panel Controls */}
         <div className="flex w-full xl:w-auto items-center justify-between gap-3">
           <div className="flex items-center gap-2 overflow-visible relative">
-            <button 
+            <button
               onClick={() => setShowColorGrid(!showColorGrid)}
               className="flex items-center gap-1 shrink-0 group"
             >
               <span className="material-symbols-outlined text-[#5e758d] text-base group-hover:text-primary transition-colors">palette</span>
               <span className="font-bold text-xs text-[#101418] dark:text-gray-200 group-hover:text-primary transition-colors">Color</span>
             </button>
-            
+
             <div className="flex items-center gap-1 no-scrollbar py-1">
               {COLORS.slice(0, 6).map(color => (
                 <button
@@ -178,13 +161,13 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <span className="material-symbols-outlined text-[#5e758d] text-base">opacity</span>
-              <input 
+              <input
                 type="range" min="20" max="100" value={panelOpacity}
                 onChange={(e) => setPanelOpacity(parseInt(e.target.value))}
                 className="w-12"
               />
             </div>
-            <button 
+            <button
               onClick={() => setIsMinimized(!isMinimized)}
               className="size-7 flex items-center justify-center rounded-lg hover:bg-[#f0f2f5] dark:hover:bg-[#3a4654] transition-colors"
             >
@@ -195,10 +178,10 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Floating Minimize Button (Visible when minimized) */}
       {isMinimized && (
-        <button 
+        <button
           onClick={() => setIsMinimized(false)}
           className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 size-10 flex items-center justify-center bg-white dark:bg-[#1a2634] rounded-b-xl shadow-soft border border-t-0 border-[#f0f2f5] dark:border-[#2a3644]"
         >

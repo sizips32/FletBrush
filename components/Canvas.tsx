@@ -45,7 +45,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     ctx.lineWidth = stroke.size;
     
     if (stroke.tool === Tool.HIGHLIGHTER) {
-      ctx.globalAlpha = 0.4;
+      ctx.globalAlpha = stroke.opacity;
       ctx.strokeStyle = stroke.color;
     } else if (stroke.tool === Tool.ERASER) {
       ctx.globalAlpha = 1.0;
