@@ -106,6 +106,11 @@ const App: React.FC = () => {
     }
   }, [history, textItems]);
 
+  const handleQuit = useCallback(() => {
+    handleSave();
+    window.close();
+  }, [handleSave]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -151,6 +156,14 @@ const App: React.FC = () => {
             <span className="material-symbols-outlined text-2xl">brush</span>
           </div>
           <h1 className="text-xl font-bold tracking-tight text-[#101418] dark:text-white">Flet Brush</h1>
+          <button
+            onClick={handleQuit}
+            className="size-10 flex items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40 transition-colors"
+            aria-label="Quit Flet Brush"
+            title="Quit Flet Brush"
+          >
+            <span className="material-symbols-outlined text-xl">power_settings_new</span>
+          </button>
         </div>
         <div className="flex gap-3">
           <button

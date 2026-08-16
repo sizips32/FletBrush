@@ -20,6 +20,7 @@ function createWindow() {
   console.log("app.isPackaged:", app.isPackaged);
 
   mainWindow = new BrowserWindow({
+    type: process.platform === "darwin" ? "panel" : undefined,
     width,
     height,
     x: 0,
@@ -140,8 +141,5 @@ app.whenReady().then(() => {
 
 // Quit when all windows are closed
 app.on("window-all-closed", () => {
-  // On macOS, keep app running even when all windows are closed
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  app.quit();
 });
