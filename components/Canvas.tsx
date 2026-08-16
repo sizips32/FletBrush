@@ -17,6 +17,7 @@ interface CanvasProps {
 export interface CanvasHandle {
   getCanvas: () => HTMLCanvasElement | null;
   exportAsImage: () => string | null;
+  resetPan: () => void;
 }
 
 const Canvas = forwardRef<CanvasHandle, CanvasProps>(({ 
@@ -34,6 +35,14 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
   const [laserPos, setLaserPos] = useState<DrawingPoint | null>(null);
+
+  // Pan state
+  const [panOffset, setPanOffset] = useState<DrawingPoint>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [spacePressed, setSpacePressed] = useState(false);
+  const panStartRef = useRef<DrawingPoint>({ x: 0, y: 0 });
+  const panOffsetAtStartRef = useRef<DrawingPoint>({ x: 0, y: 0 });
+  const lastTouchMidRef = useRef<DrawingPoint | null>(null);
 
   const drawStroke = useCallback((ctx: CanvasRenderingContext2D, stroke: DrawingStroke) => {
     if (stroke.points.length < 2) return;
@@ -67,11 +76,13 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: true }); // 투명도 지원
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    // 완전히 투명한 배경으로 지우기 (뒤 화면이 보이도록)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.translate(panOffset.x, panOffset.y);
 
     // Render strokes from history
     history.forEach(stroke => drawStroke(ctx, stroke));
@@ -99,7 +110,9 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
-  }, [history, currentStroke, textItems, laserPos, activeTool, drawStroke]);
+
+    ctx.restore();
+  }, [history, currentStroke, textItems, laserPos, activeTool, drawStroke, panOffset]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -119,6 +132,28 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     render();
   }, [render]);
 
+  // Spacebar listener for pan mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        setSpacePressed(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setSpacePressed(false);
+        setIsPanning(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
   // Expose canvas methods via ref
   useImperativeHandle(ref, () => ({
     getCanvas: () => canvasRef.current,
@@ -126,10 +161,23 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
       const canvas = canvasRef.current;
       if (!canvas) return null;
       return canvas.toDataURL('image/png');
-    }
+    },
+    resetPan: () => setPanOffset({ x: 0, y: 0 })
   }));
 
-  const getPoint = (e: React.MouseEvent | React.TouchEvent | MouseEvent): DrawingPoint => {
+  const getPoint = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent): DrawingPoint => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left - panOffset.x,
+      y: clientY - rect.top - panOffset.y
+    };
+  }, [panOffset]);
+
+  const getScreenPoint = (e: React.MouseEvent | React.TouchEvent): DrawingPoint => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
@@ -142,6 +190,28 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   };
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    // Two-finger touch → start panning
+    if ('touches' in e && e.touches.length >= 2) {
+      e.preventDefault();
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      lastTouchMidRef.current = {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2
+      };
+      setIsPanning(true);
+      return;
+    }
+
+    // Space + mouse → start panning
+    if (spacePressed) {
+      const sp = getScreenPoint(e);
+      panStartRef.current = sp;
+      panOffsetAtStartRef.current = panOffset;
+      setIsPanning(true);
+      return;
+    }
+
     if (activeTool === Tool.LASER) return;
     if (activeTool === Tool.TEXT) {
       const p = getPoint(e);
@@ -172,6 +242,34 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
   };
 
   const moveDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    // Two-finger touch panning
+    if ('touches' in e && e.touches.length >= 2 && isPanning) {
+      e.preventDefault();
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const mid = {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2
+      };
+      if (lastTouchMidRef.current) {
+        const dx = mid.x - lastTouchMidRef.current.x;
+        const dy = mid.y - lastTouchMidRef.current.y;
+        setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+      }
+      lastTouchMidRef.current = mid;
+      return;
+    }
+
+    // Space + mouse panning
+    if (isPanning && spacePressed) {
+      const sp = getScreenPoint(e);
+      setPanOffset({
+        x: panOffsetAtStartRef.current.x + (sp.x - panStartRef.current.x),
+        y: panOffsetAtStartRef.current.y + (sp.y - panStartRef.current.y)
+      });
+      return;
+    }
+
     const point = getPoint(e);
     if (activeTool === Tool.LASER) {
       setLaserPos(point);
@@ -185,7 +283,19 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     });
   };
 
-  const endDrawing = () => {
+  const endDrawing = (e?: React.MouseEvent | React.TouchEvent) => {
+    // End touch panning when fewer than 2 fingers remain
+    if (isPanning && e && 'touches' in e && e.touches.length < 2) {
+      setIsPanning(false);
+      lastTouchMidRef.current = null;
+      return;
+    }
+
+    if (isPanning) {
+      setIsPanning(false);
+      return;
+    }
+
     if (isDrawing && currentStroke) {
       onStrokeComplete(currentStroke);
     }
@@ -193,17 +303,22 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     setCurrentStroke(null);
   };
 
+  const cursorClass = spacePressed
+    ? (isPanning ? 'cursor-grabbing' : 'cursor-grab')
+    : 'cursor-crosshair';
+
   return (
     <canvas
       ref={canvasRef}
       onMouseDown={startDrawing}
       onMouseMove={moveDrawing}
       onMouseUp={endDrawing}
-      onMouseLeave={endDrawing}
+      onMouseLeave={() => endDrawing()}
       onTouchStart={startDrawing}
       onTouchMove={moveDrawing}
       onTouchEnd={endDrawing}
-      className="cursor-crosshair w-full h-full relative z-20"
+      className={`${cursorClass} w-full h-full relative z-20`}
+      style={{ touchAction: 'none' }}
     />
   );
 });

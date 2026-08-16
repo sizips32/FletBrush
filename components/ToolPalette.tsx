@@ -40,35 +40,35 @@ const ToolPalette: React.FC<ToolPaletteProps> = ({
             <button
               onClick={() => setActiveTool(Tool.PEN)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.PEN ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
-              title="Pen (✎)"
+              title="Pen (1)"
             >
               <span className="material-symbols-outlined text-lg">edit</span>
             </button>
             <button
               onClick={() => setActiveTool(Tool.HIGHLIGHTER)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.HIGHLIGHTER ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
-              title="Highlighter (✒)"
+              title="Highlighter (2)"
             >
               <span className="material-symbols-outlined text-lg">stylus</span>
             </button>
             <button
               onClick={() => setActiveTool(Tool.ERASER)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.ERASER ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
-              title="Eraser (⌦)"
+              title="Eraser (3)"
             >
               <span className="material-symbols-outlined text-lg">ink_eraser</span>
             </button>
             <button
               onClick={() => setActiveTool(Tool.TEXT)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.TEXT ? 'bg-white dark:bg-[#3a4654] text-primary shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
-              title="Text Tool (T)"
+              title="Text (4)"
             >
               <span className="material-symbols-outlined text-lg">title</span>
             </button>
             <button
               onClick={() => setActiveTool(Tool.LASER)}
               className={`flex items-center justify-center w-8 h-8 rounded-md transition-all ${activeTool === Tool.LASER ? 'bg-white dark:bg-[#3a4654] text-red-500 shadow-sm' : 'text-[#5e758d] hover:bg-white/50 dark:hover:bg-[#3a4654]/50'}`}
-              title="Laser Pointer (●)"
+              title="Laser (5)"
             >
               <span className="material-symbols-outlined text-lg">flare</span>
             </button>

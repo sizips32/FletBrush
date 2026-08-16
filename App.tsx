@@ -106,6 +106,39 @@ const App: React.FC = () => {
     }
   }, [history, textItems]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+
+      if (mod && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        handleRedo();
+      } else if (mod && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      } else if (mod && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      } else if (mod && e.key === 'e') {
+        e.preventDefault();
+        handleExport();
+      } else if (!mod && !e.altKey) {
+        switch (e.key) {
+          case '1': setActiveTool(Tool.PEN); break;
+          case '2': setActiveTool(Tool.HIGHLIGHTER); break;
+          case '3': setActiveTool(Tool.ERASER); break;
+          case '4': setActiveTool(Tool.TEXT); break;
+          case '5': setActiveTool(Tool.LASER); break;
+          case '0': canvasRef.current?.resetPan(); break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo, handleSave, handleExport]);
+
   return (
     <div className="h-screen w-screen flex flex-col bg-transparent overflow-hidden transition-colors duration-300">
       {/* Header Bar */}
@@ -123,14 +156,14 @@ const App: React.FC = () => {
           <button
             onClick={handleExport}
             className="h-10 px-5 rounded-full bg-white dark:bg-[#2a3644] border border-[#dae0e7] dark:border-[#3a4654] text-sm font-bold hover:bg-gray-50 dark:hover:bg-[#324050] transition-colors"
-            title="Export as PNG image"
+            title="Export (⌘E)"
           >
             Export
           </button>
           <button
             onClick={handleSave}
             className={`h-10 px-5 rounded-full text-white text-sm font-bold shadow-sm transition-colors ${saveStatus === 'saved' ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-blue-600'}`}
-            title="Save to browser storage"
+            title="Save (⌘S)"
           >
             {saveStatus === 'saved' ? 'Saved!' : 'Save'}
           </button>
