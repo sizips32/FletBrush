@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+const devServerUrl = process.env.VITE_DEV_SERVER_URL || "http://127.0.0.1:5173";
 
 let mainWindow = null;
 
@@ -38,21 +39,36 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
+      sandbox: true,
       webSecurity: true,
       backgroundThrottling: false,
     },
   });
 
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+
+  if (process.platform === "darwin") {
+    mainWindow.setVisibleOnAllWorkspaces(true, {
+      visibleOnFullScreen: true,
+    });
+  }
+
   // Set window to cover entire screen
   mainWindow.setBounds({ x: 0, y: 0, width, height });
   mainWindow.setAlwaysOnTop(true, "screen-saver");
 
+  if (process.platform === "darwin") {
+    console.log(
+      "Visible on all workspaces:",
+      mainWindow.isVisibleOnAllWorkspaces(),
+    );
+  }
+
   // Load the app
   if (isDev) {
     // Development: Load from Vite dev server
-    console.log("Loading from dev server: http://localhost:5173");
-    mainWindow.loadURL("http://localhost:5173").catch((err) => {
+    console.log("Loading from dev server:", devServerUrl);
+    mainWindow.loadURL(devServerUrl).catch((err) => {
       console.error("Failed to load dev server:", err);
     });
   } else {
@@ -92,8 +108,8 @@ function createWindow() {
     },
   );
 
-  mainWindow.webContents.on("crashed", () => {
-    console.error("Window crashed");
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    console.error("Renderer process exited:", details.reason);
   });
 
   // Prevent navigation to external URLs
@@ -128,11 +144,4 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
-});
-
-// Security: Prevent new window creation
-app.on("web-contents-created", (event, contents) => {
-  contents.on("new-window", (event, navigationUrl) => {
-    event.preventDefault();
-  });
 });

@@ -6,8 +6,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   base: './', // 상대 경로로 빌드하여 Electron에서 정상 작동
   server: {
-    port: 5173, // Vite 기본 포트로 변경
-    host: '0.0.0.0',
+    port: 5173,
+    host: '127.0.0.1',
+    strictPort: true,
   },
   plugins: [tailwindcss(), react()],
   resolve: {
